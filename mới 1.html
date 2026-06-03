@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⌨️ WEB LUYỆN GÕ MÁY</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#050505,#111,#000);
+color:white;
+min-height:100vh;
+padding:20px;
+overflow-x:hidden;
+animation:bgMove 8s infinite alternate;
+}
+
+@keyframes bgMove{
+0%{background-position:left;}
+100%{background-position:right;}
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+}
+
+h1{
+text-align:center;
+font-size:45px;
+margin-bottom:20px;
+text-shadow:0 0 20px #fff;
+}
+
+.topbar{
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+margin-bottom:20px;
+}
+
+select,button{
+padding:14px;
+border:none;
+border-radius:14px;
+background:#1b1b1b;
+color:white;
+font-size:16px;
+cursor:pointer;
+transition:.2s;
+}
+
+button:hover{
+background:#333;
+transform:scale(1.05);
+}
+
+.text-box{
+background:#121212;
+border:2px solid #222;
+border-radius:20px;
+padding:25px;
+font-size:24px;
+line-height:1.9;
+min-height:240px;
+margin-bottom:20px;
+user-select:none;
+overflow-wrap:break-word;
+box-shadow:0 0 25px #000;
+}
+
+.correct{
+color:#00ff99;
+text-shadow:0 0 8px #00ff99;
+}
+
+.wrong{
+color:#ff4d4d;
+background:#ff000020;
+border-radius:4px;
+}
+
+.current{
+background:#ffffff30;
+border-radius:4px;
+animation:blink 1s infinite;
+}
+
+@keyframes blink{
+50%{opacity:.3;}
+}
+
+textarea{
+width:100%;
+height:180px;
+background:#191919;
+color:white;
+border:none;
+outline:none;
+resize:none;
+border-radius:20px;
+padding:20px;
+font-size:20px;
+box-shadow:0 0 20px #000;
+}
+
+.stats{
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+margin-top:20px;
+}
+
+.card{
+flex:1;
+min-width:180px;
+background:#121212;
+border-radius:18px;
+padding:20px;
+text-align:center;
+box-shadow:0 0 20px #000;
+}
+
+.card h2{
+color:#999;
+margin-bottom:10px;
+}
+
+.card p{
+font-size:32px;
+font-weight:bold;
+}
+
+.result{
+margin-top:25px;
+background:#101010;
+border-radius:20px;
+padding:25px;
+font-size:23px;
+line-height:1.8;
+box-shadow:0 0 20px #000;
+}
+
+.comment{
+margin-top:15px;
+color:#00e5ff;
+font-size:24px;
+}
+
+/* streak */
+.streak{
+position:fixed;
+top:20px;
+right:20px;
+background:#111;
+padding:15px 25px;
+border-radius:15px;
+font-size:24px;
+box-shadow:0 0 20px #000;
+z-index:999;
+}
+
+.rank{
+margin-top:10px;
+font-size:28px;
+color:#00ffcc;
+}
+
+@media(max-width:700px){
+
+.text-box{
+font-size:18px;
+}
+
+textarea{
+font-size:17px;
+}
+
+h1{
+font-size:32px;
+}
+
+}
+</style>
+</head>
+
+<body>
+
+<div class="streak">
+🔥 Combo: <span id="combo">0</span>
+<div class="rank" id="rank">NOOB</div>
+</div>
+
+<div class="container">
+
+<h1>⌨️ WEB LUYỆN GÕ MÁY</h1>
+
+<div class="topbar">
+
+<select id="language">
+<option value="vi">🇻🇳 Tiếng Việt</option>
+<option value="en">🇺🇸 English</option>
+<option value="it">💻 Công Nghệ Thông Tin</option>
+<option value="love">💘 Thả Thính</option>
+<option value="literature">📖 Ngữ Văn</option>
+<option value="geography">🌍 Địa Lý</option>
+<option value="poem">📝 Thơ</option>
+<option value="music">🎵 Nhạc</option>
+</select>
+
+<button onclick="startGame()"> Đổi Bài</button>
+
+</div>
+
+<div class="text-box" id="textDisplay"></div>
+
+<textarea id="input" placeholder="Bắt đầu gõ ở đây..."></textarea>
+
+<div class="stats">
+
+<div class="card">
+<h2>⏱️ Thời Gian</h2>
+<p id="time">0s</p>
+</div>
+
+<div class="card">
+<h2>⚡ WPM</h2>
+<p id="wpm">0</p>
+</div>
+
+<div class="card">
+<h2>🎯 Chính Xác</h2>
+<p id="accuracy">100%</p>
+</div>
+
+<div class="card">
+<h2>🏆 Kỷ Lục</h2>
+<p id="best">0</p>
+</div>
+
+</div>
+
+<div class="result" id="result">
+<div>💻 Chọn chế độ để luyện gõ.</div>
+</div>
+
+</div>
+
+<script>
+
+const comboEl=document.getElementById("combo");
+const rankEl=document.getElementById("rank");
+const bestEl=document.getElementById("best");
+
+let combo=0;
+
+bestEl.innerText=localStorage.getItem("bestWPM")||0;
+
+const data={
+vi:[
+"Máy tính hiện đại có khả năng xử lý hàng tỷ phép tính mỗi giây.",
+"Lập trình web giúp tạo ra các trang web tương tác và đẹp mắt."
+],
+en:[
+"Programming requires practice patience and logical thinking.",
+"Modern computers can process huge amounts of data quickly."
+],
+it:[
+"HTML CSS và JavaScript là ba nền tảng quan trọng của lập trình web.",
+"Thuật toán giúp giải quyết vấn đề bằng các bước logic rõ ràng."
+],
+love:[
+"Anh nhớ em nhiều hơn cả việc nhớ mật khẩu wifi mỗi ngày.",
+"Em cười một cái là tim anh lag toàn tập."
+],
+literature:[
+"Văn học phản ánh đời sống xã hội và tâm tư tình cảm con người.",
+"Nguyễn Du là đại thi hào dân tộc với tác phẩm Truyện Kiều nổi tiếng."
+],
+geography:[
+"Việt Nam nằm ở khu vực Đông Nam Á và tiếp giáp Biển Đông.",
+"Khí hậu nước ta mang tính chất nhiệt đới gió mùa ẩm."
+],
+poem:[
+"Quê hương là chùm khế ngọt cho con trèo hái mỗi ngày.",
+"Trăng lên đầu núi trăng tà xuống khe tiếng suối trong như tiếng hát xa."
+],
+music:[
+"Thanh xuân giống như một cơn mưa rào dù bị cảm vẫn muốn quay lại.",
+"Có những người chỉ cần gặp một lần đã nhớ cả đời."
+]
+};
+
+const textDisplay=document.getElementById("textDisplay");
+const input=document.getElementById("input");
+const timeEl=document.getElementById("time");
+const wpmEl=document.getElementById("wpm");
+const accuracyEl=document.getElementById("accuracy");
+const result=document.getElementById("result");
+
+let currentText="";
+let started=false;
+let startTime;
+let timer;
+
+function randomText(){
+const lang=document.getElementById("language").value;
+const arr=data[lang];
+return arr[Math.floor(Math.random()*arr.length)];
+}
+
+function renderText(){
+currentText=randomText();
+textDisplay.innerHTML="";
+currentText.split("").forEach(char=>{
+const span=document.createElement("span");
+span.innerText=char;
+textDisplay.appendChild(span);
+});
+}
+
+function startGame(){
+clearInterval(timer);
+
+started=false;
+combo=0;
+comboEl.innerText=combo;
+
+timeEl.innerText="0s";
+wpmEl.innerText="0";
+accuracyEl.innerText="100%";
+
+input.value="";
+input.disabled=false;
+
+result.innerHTML=`<div>🔥 Bắt đầu luyện gõ đi nào.</div>`;
+
+renderText();
+input.focus();
+}
+
+renderText();
+
+input.addEventListener("input",()=>{
+
+if(!started){
+started=true;
+startTime=new Date();
+
+timer=setInterval(()=>{
+const seconds=Math.floor((new Date()-startTime)/1000);
+timeEl.innerText=seconds+"s";
+},1000);
+}
+
+const characters=textDisplay.querySelectorAll("span");
+const typed=input.value.split("");
+let correct=0;
+
+characters.forEach((char,index)=>{
+const typedChar=typed[index];
+
+char.classList.remove("correct","wrong","current");
+
+if(typedChar==null){
+char.classList.add("current");
+}
+else if(typedChar===char.innerText){
+char.classList.add("correct");
+correct++;
+}else{
+char.classList.add("wrong");
+}
+});
+
+combo++;
+comboEl.innerText=combo;
+
+if(combo<30) rankEl.innerText="NOOB";
+else if(combo<80) rankEl.innerText="PRO";
+else rankEl.innerText="GOD";
+
+const seconds=Math.max(1,Math.floor((new Date()-startTime)/1000));
+const words=input.value.trim().split(/\s+/).length;
+const wpm=Math.round(words/(seconds/60));
+
+wpmEl.innerText=wpm;
+
+const acc=Math.round((correct/characters.length)*100);
+accuracyEl.innerText=acc+"%";
+
+if(wpm>(localStorage.getItem("bestWPM")||0)){
+localStorage.setItem("bestWPM",wpm);
+bestEl.innerText=wpm;
+}
+
+if(input.value===currentText){
+clearInterval(timer);
+
+result.innerHTML=`
+<div>
+🎉 HOÀN THÀNH
+<br><br>
+⏱️ ${seconds}s
+<br>
+⚡ ${wpm} WPM
+<br>
+🎯 ${acc}%
+</div>
+`;
+
+input.disabled=true;
+}
+});
+
+</script>
+
+</body>
+</html>
